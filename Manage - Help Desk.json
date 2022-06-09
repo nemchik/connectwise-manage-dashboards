@@ -2,7 +2,7 @@
   "__inputs": [
     {
       "name": "DS_CONNECTWISE_MANAGE",
-      "label": "ConnectWise Manage",
+      "label": "CONNECTWISE_MANAGE",
       "description": "",
       "type": "datasource",
       "pluginId": "mssql",
@@ -30,6 +30,20 @@
       "description": ""
     },
     {
+      "name": "VAR_CW_LOCALE",
+      "type": "constant",
+      "label": "cw_locale",
+      "value": "en_US",
+      "description": ""
+    },
+    {
+      "name": "VAR_GRAFANA_URL",
+      "type": "constant",
+      "label": "grafana_url",
+      "value": "http://172.16.16.112:3000",
+      "description": ""
+    },
+    {
       "name": "VAR_RANDOM_DELAY",
       "type": "constant",
       "label": "Random delay, between zero and $random_delay seconds",
@@ -37,6 +51,7 @@
       "description": ""
     }
   ],
+  "__elements": [],
   "__requires": [
     {
       "type": "panel",
@@ -48,13 +63,7 @@
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "7.0.0"
-    },
-    {
-      "type": "panel",
-      "id": "graph",
-      "name": "Graph",
-      "version": ""
+      "version": "8.5.3"
     },
     {
       "type": "datasource",
@@ -67,36 +76,74 @@
       "id": "stat",
       "name": "Stat",
       "version": ""
+    },
+    {
+      "type": "panel",
+      "id": "timeseries",
+      "name": "Time series",
+      "version": ""
     }
   ],
   "annotations": {
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
   },
   "editable": true,
-  "gnetId": null,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1609382011071,
-  "links": [],
+  "iteration": 1654805898261,
+  "links": [
+    {
+      "asDropdown": false,
+      "icon": "external link",
+      "includeVars": false,
+      "keepTime": false,
+      "tags": [
+        "ConnectWise",
+        "Personal Dashboard"
+      ],
+      "targetBlank": true,
+      "title": "Personal Dashboard",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    }
+  ],
+  "liveNow": false,
   "panels": [
     {
-      "datasource": "${DS_CONNECTWISE_MANAGE}",
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_CONNECTWISE_MANAGE}"
+      },
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": null
-          },
-          "links": [],
+          "links": [
+            {
+              "targetBlank": true,
+              "title": "Personal Dashboard",
+              "url": "${grafana_url}/d/89mGyg1Gy/"
+            }
+          ],
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -108,32 +155,7 @@
             ]
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Summary"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 520
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Company_Name"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 185
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
@@ -142,6 +164,13 @@
         "y": 0
       },
       "id": 4,
+      "links": [
+        {
+          "targetBlank": true,
+          "title": "Personal Dashboard",
+          "url": "${grafana_url}/d/89mGyg1Gy/"
+        }
+      ],
       "options": {
         "colorMode": "value",
         "graphMode": "area",
@@ -151,20 +180,24 @@
           "calcs": [
             "mean"
           ],
+          "fields": "",
           "values": false
-        }
+        },
+        "textMode": "auto"
       },
-      "pluginVersion": "7.0.0",
+      "pluginVersion": "8.5.3",
       "targets": [
         {
           "alias": "",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_CONNECTWISE_MANAGE}"
+          },
           "format": "table",
-          "rawSql": "DECLARE @RandomDelay int = ABS(CHECKSUM(NEWID()) % ($random_delay-1))\nWAITFOR DELAY @RandomDelay\nSELECT count(*)\n  FROM [$cw_db_name].[dbo].[v_api_collection_service_ticket]\n  WHERE [Closed_Flag] = 0\n  AND [Board_Name] LIKE 'Support'\n  AND [parentTicketId] IS NULL\n",
+          "rawSql": "DECLARE @RandomDelay INT = ABS(CHECKSUM(NEWID()) % (${random_delay}-1)) WAITFOR DELAY @RandomDelay\r\nSELECT COUNT(*)\r\nFROM\r\n    [${cw_db_name}].[dbo].[v_api_collection_service_ticket]\r\nWHERE\r\n    [Board_Name] IN(${cw_board:sqlstring}) AND\r\n    [Closed_Flag] = 0 AND\r\n    [parentTicketId] IS NULL",
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Open Support Tickets",
       "transformations": [
         {
@@ -223,14 +256,13 @@
       "type": "stat"
     },
     {
-      "datasource": "${DS_CONNECTWISE_MANAGE}",
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_CONNECTWISE_MANAGE}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": null,
-            "displayMode": "auto"
-          },
           "links": [],
           "mappings": [],
           "thresholds": {
@@ -243,32 +275,7 @@
             ]
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Closed last 24 hrs"
-            },
-            "properties": [
-              {
-                "id": "custom.displayMode",
-                "value": "gradient-gauge"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Closed_By"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 157
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 4,
@@ -286,20 +293,24 @@
           "calcs": [
             "mean"
           ],
+          "fields": "",
           "values": true
-        }
+        },
+        "textMode": "auto"
       },
-      "pluginVersion": "7.0.0",
+      "pluginVersion": "8.5.3",
       "targets": [
         {
           "alias": "",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_CONNECTWISE_MANAGE}"
+          },
           "format": "table",
-          "rawSql": "DECLARE @RandomDelay int = ABS(CHECKSUM(NEWID()) % ($random_delay-1))\nWAITFOR DELAY @RandomDelay\nSELECT COUNT(*)\n  FROM [$cw_db_name].[dbo].[v_api_collection_service_ticket]\n  WHERE [Closed_Flag] = 1\n  AND ([Board_Name] LIKE 'Support' OR [Board_Name] LIKE 'Triage')\n  AND [parentTicketId] IS NULL\n  AND [Date_Closed_UTC] > GETUTCDATE() - 0.5",
+          "rawSql": "DECLARE @RandomDelay INT = ABS(CHECKSUM(NEWID()) % (${random_delay}-1)) WAITFOR DELAY @RandomDelay\r\nSELECT COUNT(*)\r\nFROM\r\n    [${cw_db_name}].[dbo].[v_api_collection_service_ticket]\r\nWHERE\r\n    [Board_Name] IN(${cw_board:sqlstring}) AND\r\n    [Closed_Flag] = 1 AND\r\n    [parentTicketId] IS NULL AND\r\n    [Date_Closed_UTC] > GETUTCDATE() - 0.5",
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Tickets Opened Today",
       "transformations": [
         {
@@ -363,18 +374,18 @@
       "type": "stat"
     },
     {
-      "datasource": "${DS_CONNECTWISE_MANAGE}",
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_CONNECTWISE_MANAGE}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": null
-          },
           "links": [
             {
               "targetBlank": true,
               "title": "Open Drilldown",
-              "url": "http://grafana.yourmsp.com.au:3000/d/fXuVBXxGk/manage-drilldown-triage?orgId=1&refresh=15m"
+              "url": "${grafana_url}/d/fXuVBXxGk/"
             }
           ],
           "mappings": [],
@@ -413,7 +424,7 @@
         {
           "targetBlank": true,
           "title": "Open Drilldown",
-          "url": "http://grafana.yourmsp.com.au:3000/d/fXuVBXxGk/manage-drilldown-triage?orgId=1&refresh=15m"
+          "url": "${grafana_url}/d/fXuVBXxGk/"
         }
       ],
       "options": {
@@ -425,20 +436,24 @@
           "calcs": [
             "mean"
           ],
+          "fields": "",
           "values": false
-        }
+        },
+        "textMode": "auto"
       },
-      "pluginVersion": "7.0.0",
+      "pluginVersion": "8.5.3",
       "targets": [
         {
           "alias": "",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_CONNECTWISE_MANAGE}"
+          },
           "format": "table",
-          "rawSql": "DECLARE @RandomDelay int = ABS(CHECKSUM(NEWID()) % ($random_delay-1))\nWAITFOR DELAY @RandomDelay\nSELECT COUNT(*)\n  FROM [$cw_db_name].[dbo].[v_api_collection_service_ticket]\n  WHERE [Closed_Flag] = 0\n  AND [Board_Name] LIKE 'Triage'\n  AND [parentTicketId] IS NULL",
+          "rawSql": "DECLARE @RandomDelay INT = ABS(CHECKSUM(NEWID()) % (${random_delay}-1)) WAITFOR DELAY @RandomDelay\r\nSELECT COUNT(*)\r\nFROM\r\n    [${cw_db_name}].[dbo].[v_api_collection_service_ticket]\r\nWHERE\r\n    [Board_Name] IN(${cw_board:sqlstring}) AND\r\n    [Closed_Flag] = 0 AND\r\n    [parentTicketId] IS NULL AND\r\n    [ResourceList] IN (\r\n        SELECT [Member_ID]\r\n        FROM\r\n            [${cw_db_name}].[dbo].[v_api_collection_system_member]\r\n        WHERE\r\n            [Inactive_Flag] = 0 AND\r\n            [Member_Class] = 'F' AND\r\n            [Member_Name] LIKE '%#%' AND\r\n            [Date_Hire] IS NOT NULL\r\n    )",
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Unassigned Tickets",
       "transformations": [
         {
@@ -510,18 +525,18 @@
       "type": "stat"
     },
     {
-      "datasource": "${DS_CONNECTWISE_MANAGE}",
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_CONNECTWISE_MANAGE}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": null
-          },
           "links": [
             {
               "targetBlank": true,
               "title": "Open Drilldown",
-              "url": "http://grafana.yourmsp.com.au:3000/d/DKgrxXxMz/manage-drilldown-unassigned-support?orgId=1&refresh=15m"
+              "url": "${grafana_url}/d/DKgrxXxMz/"
             }
           ],
           "mappings": [],
@@ -550,9 +565,9 @@
       "id": 13,
       "links": [
         {
-          "targetBlank": false,
+          "targetBlank": true,
           "title": "Open Drilldown",
-          "url": "http://grafana.yourmsp.com.au:3000/d/DKgrxXxMz/manage-drilldown-unassigned-support?orgId=1&refresh=15m"
+          "url": "${grafana_url}/d/DKgrxXxMz/"
         }
       ],
       "options": {
@@ -564,20 +579,24 @@
           "calcs": [
             "mean"
           ],
+          "fields": "",
           "values": false
-        }
+        },
+        "textMode": "auto"
       },
-      "pluginVersion": "7.0.0",
+      "pluginVersion": "8.5.3",
       "targets": [
         {
           "alias": "",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_CONNECTWISE_MANAGE}"
+          },
           "format": "table",
-          "rawSql": "DECLARE @RandomDelay int = ABS(CHECKSUM(NEWID()) % ($random_delay-1))\nWAITFOR DELAY @RandomDelay\nSELECT COUNT(*)\n  FROM [$cw_db_name].[dbo].[v_api_collection_service_ticket]\n  WHERE [Closed_Flag] = 0\n  AND [Board_Name] LIKE 'Support'\n  AND [parentTicketId] IS NULL\n  AND ResourceList IS NULL",
+          "rawSql": "DECLARE @RandomDelay INT = ABS(CHECKSUM(NEWID()) % (${random_delay}-1)) WAITFOR DELAY @RandomDelay\r\nSELECT COUNT(*)\r\nFROM\r\n    [${cw_db_name}].[dbo].[v_api_collection_service_ticket]\r\nWHERE\r\n    [Board_Name] IN(${cw_board:sqlstring}) AND\r\n    [Closed_Flag] = 0 AND\r\n    [parentTicketId] IS NULL AND\r\n    [ResourceList] IS NULL",
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Unassigned Tickets on Support Board",
       "transformations": [
         {
@@ -649,18 +668,18 @@
       "type": "stat"
     },
     {
-      "datasource": "${DS_CONNECTWISE_MANAGE}",
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_CONNECTWISE_MANAGE}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": null
-          },
           "links": [
             {
               "targetBlank": true,
               "title": "Open Drilldown",
-              "url": "http://grafana.yourmsp.com.au:3000/d/UaFL8XxGk/manage-drilldown-breached-resplan?refresh=15m"
+              "url": "${grafana_url}/d/UaFL8XxGk/"
             }
           ],
           "mappings": [],
@@ -678,32 +697,7 @@
             ]
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Summary"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 520
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Company_Name"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 185
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
@@ -716,7 +710,7 @@
         {
           "targetBlank": true,
           "title": "Open Drilldown",
-          "url": "http://grafana.yourmsp.com.au:3000/d/UaFL8XxGk/manage-drilldown-breached-resplan?refresh=15m"
+          "url": "${grafana_url}/d/UaFL8XxGk/"
         }
       ],
       "options": {
@@ -728,20 +722,24 @@
           "calcs": [
             "mean"
           ],
+          "fields": "",
           "values": false
-        }
+        },
+        "textMode": "auto"
       },
-      "pluginVersion": "7.0.0",
+      "pluginVersion": "8.5.3",
       "targets": [
         {
           "alias": "",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_CONNECTWISE_MANAGE}"
+          },
           "format": "table",
-          "rawSql": "DECLARE @RandomDelay int = ABS(CHECKSUM(NEWID()) % ($random_delay-1))\nWAITFOR DELAY @RandomDelay\nSELECT COUNT(*)\n  FROM [$cw_db_name].[dbo].[v_api_collection_service_ticket]\n  WHERE [Closed_Flag] = 0\n  AND [Board_Name] LIKE 'Support'\n  AND [parentTicketId] IS NULL\n  AND [SR_Urgency_Name] LIKE 'Priority 0 - MSP'\n  AND [IsInSLA] = 0\n",
+          "rawSql": "DECLARE @RandomDelay INT = ABS(CHECKSUM(NEWID()) % (${random_delay}-1)) WAITFOR DELAY @RandomDelay\r\nSELECT COUNT(*)\r\nFROM\r\n    [${cw_db_name}].[dbo].[v_api_collection_service_ticket]\r\nWHERE\r\n    [Board_Name] IN(${cw_board:sqlstring}) AND\r\n    [Closed_Flag] = 0 AND\r\n    [parentTicketId] IS NULL AND\r\n    [IsInSLA] = 0 AND\r\n    [SR_Urgency_Name] = (\r\n        SELECT TOP 1 [SR_Urgency_Name]\r\n        FROM\r\n            [${cw_db_name}].[dbo].[v_api_collection_service_ticket]\r\n        ORDER BY [SR_Urgency_Name]\r\n    )",
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Breached ResPlan",
       "transformations": [
         {
@@ -800,14 +798,20 @@
       "type": "stat"
     },
     {
-      "datasource": "${DS_CONNECTWISE_MANAGE}",
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_CONNECTWISE_MANAGE}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": null
-          },
-          "links": [],
+          "links": [
+            {
+              "targetBlank": true,
+              "title": "Open Drilldown",
+              "url": "${grafana_url}/d/LKIYZn1nk/"
+            }
+          ],
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -819,32 +823,7 @@
             ]
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Summary"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 520
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Company_Name"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 185
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
@@ -853,6 +832,13 @@
         "y": 0
       },
       "id": 12,
+      "links": [
+        {
+          "targetBlank": true,
+          "title": "Open Drilldown",
+          "url": "${grafana_url}/d/LKIYZn1nk/"
+        }
+      ],
       "options": {
         "colorMode": "value",
         "graphMode": "area",
@@ -862,21 +848,25 @@
           "calcs": [
             "mean"
           ],
+          "fields": "",
           "values": false
-        }
+        },
+        "textMode": "auto"
       },
-      "pluginVersion": "7.0.0",
+      "pluginVersion": "8.5.3",
       "targets": [
         {
           "alias": "",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_CONNECTWISE_MANAGE}"
+          },
           "format": "table",
-          "rawSql": "DECLARE @RandomDelay int = ABS(CHECKSUM(NEWID()) % ($random_delay-1))\nWAITFOR DELAY @RandomDelay\nSELECT count(*)\n  FROM [$cw_db_name].[dbo].[v_api_collection_service_ticket]\n  WHERE [Closed_Flag] = 0\n  AND ([Board_Name] LIKE 'Support' OR [Board_Name] LIKE 'Triage')\n  AND [parentTicketId] IS NULL\n  AND [Last_Update_UTC] < GETUTCDATE() - 3\n  AND [Status_Name] NOT LIKE 'Awaiting Hardware'\n  AND [Status_Name] NOT LIKE 'Awaiting Onsite'\n  AND [Status_Name] NOT LIKE 'Scheduled'\n",
+          "rawSql": "DECLARE @RandomDelay INT = ABS(CHECKSUM(NEWID()) % (${random_delay}-1)) WAITFOR DELAY @RandomDelay\r\nSELECT COUNT(*)\r\nFROM\r\n    [${cw_db_name}].[dbo].[v_api_collection_service_ticket]\r\nWHERE\r\n    [Board_Name] IN(${cw_board:sqlstring}) AND\r\n    [Closed_Flag] = 0 AND\r\n    [parentTicketId] IS NULL AND\r\n    [Last_Update_UTC] < GETUTCDATE() - 3 AND\r\n    [Status_Name] NOT IN ('Scheduled') AND\r\n    [Status_Name] NOT LIKE '%wait%'",
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Tickets not updated in 3 days",
+      "title": "Untouched Tickets (3+ days)",
       "transformations": [
         {
           "id": "organize",
@@ -934,13 +924,12 @@
       "type": "stat"
     },
     {
-      "datasource": "${DS_CONNECTWISE_MANAGE}",
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_CONNECTWISE_MANAGE}"
+      },
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": null,
-            "displayMode": "auto"
-          },
           "links": [],
           "mappings": [],
           "thresholds": {
@@ -953,32 +942,7 @@
             ]
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Closed last 24 hrs"
-            },
-            "properties": [
-              {
-                "id": "custom.displayMode",
-                "value": "gradient-gauge"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Closed_By"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 157
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 4,
@@ -996,20 +960,24 @@
           "calcs": [
             "mean"
           ],
+          "fields": "",
           "values": true
-        }
+        },
+        "textMode": "auto"
       },
-      "pluginVersion": "7.0.0",
+      "pluginVersion": "8.5.3",
       "targets": [
         {
           "alias": "",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_CONNECTWISE_MANAGE}"
+          },
           "format": "table",
-          "rawSql": "DECLARE @RandomDelay int = ABS(CHECKSUM(NEWID()) % ($random_delay-1))\nWAITFOR DELAY @RandomDelay\nSELECT COUNT(*)\n  FROM [$cw_db_name].[dbo].[v_api_collection_service_ticket]\n  WHERE [Closed_Flag] = 1\n  AND ([Board_Name] LIKE 'Support')\n  AND [parentTicketId] IS NULL\n  AND [Date_Entered_UTC] > GETUTCDATE() - 0.5",
+          "rawSql": "DECLARE @RandomDelay INT = ABS(CHECKSUM(NEWID()) % (${random_delay}-1)) WAITFOR DELAY @RandomDelay\r\nSELECT COUNT(*)\r\nFROM\r\n    [${cw_db_name}].[dbo].[v_api_collection_service_ticket]\r\nWHERE\r\n    [Board_Name] IN(${cw_board:sqlstring}) AND\r\n    [Closed_Flag] = 1 AND\r\n    [parentTicketId] IS NULL AND\r\n    [Date_Entered_UTC] > GETUTCDATE() - 0.5",
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Tickets Closed Today",
       "transformations": [
         {
@@ -1073,14 +1041,12 @@
       "type": "stat"
     },
     {
-      "datasource": "${DS_CONNECTWISE_MANAGE}",
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_CONNECTWISE_MANAGE}"
+      },
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": null,
-            "displayMode": "auto"
-          },
-          "displayName": "$__cell_0",
           "links": [],
           "mappings": [],
           "thresholds": {
@@ -1097,32 +1063,7 @@
             ]
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Closed last 24 hrs"
-            },
-            "properties": [
-              {
-                "id": "custom.displayMode",
-                "value": "gradient-gauge"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Closed_By"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 157
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 9,
@@ -1133,27 +1074,32 @@
       "id": 8,
       "options": {
         "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
         "orientation": "vertical",
         "reduceOptions": {
           "calcs": [
             "mean"
           ],
+          "fields": "",
           "values": true
         },
         "showUnfilled": true
       },
-      "pluginVersion": "7.0.0",
+      "pluginVersion": "8.5.3",
       "targets": [
         {
           "alias": "",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_CONNECTWISE_MANAGE}"
+          },
           "format": "table",
-          "rawSql": "DECLARE @RandomDelay int = ABS(CHECKSUM(NEWID()) % ($random_delay-1))\nWAITFOR DELAY @RandomDelay\nSELECT\n      [Closed_By], \n      COUNT(*) as 'Closed last 24 hrs'\n  FROM [$cw_db_name].[dbo].[v_api_collection_service_ticket]\n  WHERE [Closed_Flag] = 1\n  AND ([Board_Name] LIKE 'Support' OR [Board_Name] LIKE 'Alerts')\n  AND [parentTicketId] IS NULL\n  AND [Date_Closed_UTC] > GETUTCDATE() - 0.5\n  AND [Hours_Actual] > 0\n  GROUP BY [Closed_By]\n  ORDER BY 'Closed last 24 hrs' DESC",
+          "rawSql": "DECLARE @RandomDelay INT = ABS(CHECKSUM(NEWID()) % (${random_delay}-1)) WAITFOR DELAY @RandomDelay\r\nSELECT [Closed_By], COUNT(*) AS 'Closed Count'\r\nFROM\r\n    [${cw_db_name}].[dbo].[v_api_collection_service_ticket]\r\nWHERE\r\n    [Board_Name] IN(${cw_board:sqlstring}) AND\r\n    [Closed_Flag] = 1 AND\r\n    [parentTicketId] IS NULL AND\r\n    [Date_Closed_UTC] > GETUTCDATE() - 0.5 AND\r\n    [Hours_Actual] > 0\r\nGROUP BY [Closed_By]\r\nORDER BY 'Closed Count' DESC",
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Closed Tickets in the Last 12hrs",
+      "title": "Closed Tickets Today",
       "transformations": [
         {
           "id": "organize",
@@ -1216,14 +1162,13 @@
       "type": "bargauge"
     },
     {
-      "datasource": "${DS_CONNECTWISE_MANAGE}",
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_CONNECTWISE_MANAGE}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": null
-          },
-          "displayName": "$__cell_0",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -1250,42 +1195,72 @@
       "id": 18,
       "options": {
         "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
             "mean"
           ],
+          "fields": "",
           "values": true
         },
         "showUnfilled": true
       },
-      "pluginVersion": "7.0.0",
+      "pluginVersion": "8.5.3",
       "targets": [
         {
           "alias": "",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_CONNECTWISE_MANAGE}"
+          },
           "format": "table",
-          "rawSql": "DECLARE @RandomDelay int = ABS(CHECKSUM(NEWID()) % ($random_delay-1))\nWAITFOR DELAY @RandomDelay\nSELECT Member_Name, SUM([Hours_Actual]) as 'Sum_Hours_Actual'\n  FROM [$cw_db_name].[dbo].[v_api_collection_time_entry]\n  WHERE [Time_Start] > GETUTCDATE() - 0.5\n  AND [Time_End] < GETUTCDATE() + 0.5\n  GROUP BY [Member_Name]\n  ORDER BY 'Sum_Hours_Actual' DESC",
+          "rawSql": "DECLARE @RandomDelay INT = ABS(CHECKSUM(NEWID()) % (${random_delay}-1)) WAITFOR DELAY @RandomDelay\r\nSELECT\r\n    Member_Name,\r\n    SUM([Hours_Actual]) AS 'Sum_Hours_Actual'\r\nFROM\r\n    [${cw_db_name}].[dbo].[v_api_collection_time_entry]\r\nWHERE\r\n    [Time_Start] > GETUTCDATE() - 0.5 AND\r\n    [Time_End] < GETUTCDATE() + 0.5\r\nGROUP BY [Member_Name]\r\nORDER BY 'Sum_Hours_Actual' DESC",
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Hours Logged Today",
       "type": "bargauge"
     },
     {
-      "aliasColors": {},
-      "bars": false,
-      "dashLength": 10,
-      "dashes": false,
-      "datasource": "${DS_CONNECTWISE_MANAGE}",
-      "decimals": 0,
-      "description": "Excludes Automate Tickets",
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_CONNECTWISE_MANAGE}"
+      },
+      "description": "",
       "fieldConfig": {
         "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
           "custom": {
-            "align": null,
-            "displayMode": "auto"
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 30,
+            "gradientMode": "opacity",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 8,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "always",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "links": [],
           "mappings": [],
@@ -1293,111 +1268,97 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "blue",
+                "color": "green",
                 "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
-          }
+          },
+          "unit": "short"
         },
         "overrides": [
           {
             "matcher": {
               "id": "byName",
-              "options": "Closed last 24 hrs"
+              "options": "Opened Tickets"
             },
             "properties": [
               {
-                "id": "custom.displayMode",
-                "value": "gradient-gauge"
+                "id": "color",
+                "value": {
+                  "fixedColor": "#5794F2",
+                  "mode": "fixed"
+                }
               }
             ]
           },
           {
             "matcher": {
               "id": "byName",
-              "options": "Closed_By"
+              "options": "Closed Tickets"
             },
             "properties": [
               {
-                "id": "custom.width",
-                "value": 157
+                "id": "color",
+                "value": {
+                  "fixedColor": "#73BF69",
+                  "mode": "fixed"
+                }
               }
             ]
           }
         ]
       },
-      "fill": 1,
-      "fillGradient": 3,
       "gridPos": {
         "h": 9,
         "w": 12,
         "x": 0,
         "y": 17
       },
-      "hiddenSeries": false,
       "id": 19,
-      "legend": {
-        "alignAsTable": true,
-        "avg": true,
-        "current": true,
-        "max": false,
-        "min": false,
-        "rightSide": false,
-        "show": true,
-        "total": true,
-        "values": true
-      },
-      "lines": true,
-      "linewidth": 2,
-      "nullPointMode": "null as zero",
       "options": {
-        "dataLinks": []
-      },
-      "percentage": false,
-      "pluginVersion": "7.0.0",
-      "pointradius": 3,
-      "points": true,
-      "renderer": "flot",
-      "seriesOverrides": [
-        {
-          "$$hashKey": "object:1042",
-          "alias": "Opened Tickets",
-          "color": "#5794F2"
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
         },
-        {
-          "$$hashKey": "object:1052",
-          "alias": "Closed Tickets",
-          "color": "#73BF69"
+        "tooltip": {
+          "mode": "single",
+          "sort": "none"
         }
-      ],
-      "spaceLength": 10,
-      "stack": false,
-      "steppedLine": false,
+      },
+      "pluginVersion": "8.3.3",
       "targets": [
         {
           "alias": "",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_CONNECTWISE_MANAGE}"
+          },
           "format": "time_series",
-          "rawSql": "DECLARE @RandomDelay int = ABS(CHECKSUM(NEWID()) % ($random_delay-1))\nWAITFOR DELAY @RandomDelay\nSELECT $__timeGroup([Date_Entered_UTC], '1d',0) as time, ISNULL(count([SR_Service_RecID]), 0) as 'Opened Tickets'\n  FROM [$cw_db_name].[dbo].[v_api_collection_service_ticket]\n  WHERE ([Board_Name] LIKE 'Support' OR [Board_Name] LIKE 'Triage')\n  AND [parentTicketId] IS NULL\n  AND [Entered_By] NOT LIKE 'Automate'\n  AND [Date_Entered_UTC] > GETUTCDATE() - 14\n  GROUP BY $__timeGroup([Date_Entered_UTC], '1d',0)\n  ORDER BY $__timeGroup([Date_Entered_UTC], '1d',0)",
+          "rawSql": "DECLARE @RandomDelay INT = ABS(CHECKSUM(NEWID()) % (${random_delay}-1)) WAITFOR DELAY @RandomDelay\r\nSELECT\r\n    $__timeGroup([Date_Entered_UTC], '1d', 0) AS 'time',\r\n    ISNULL(COUNT([SR_Service_RecID]), 0) AS 'Opened Tickets'\r\nFROM\r\n    [${cw_db_name}].[dbo].[v_api_collection_service_ticket]\r\nWHERE\r\n    [Board_Name] IN(${cw_board:sqlstring}) AND\r\n    [parentTicketId] IS NULL AND\r\n    $__timeFilter([Date_Entered_UTC])\r\nGROUP BY\r\n    $__timeGroup([Date_Entered_UTC], '1d', 0)\r\nORDER BY $__timeGroup([Date_Entered_UTC], '1d', 0)",
           "refId": "A"
         },
         {
           "alias": "",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_CONNECTWISE_MANAGE}"
+          },
           "format": "time_series",
           "hide": false,
-          "rawSql": "DECLARE @RandomDelay int = ABS(CHECKSUM(NEWID()) % ($random_delay-1))\nWAITFOR DELAY @RandomDelay\nSELECT $__timeGroup([Date_Closed_UTC], '1d',0) as time, ISNULL(count([SR_Service_RecID]), 0) as 'Closed Tickets'\n  FROM [$cw_db_name].[dbo].[v_api_collection_service_ticket]\n  WHERE ([Board_Name] LIKE 'Support' OR [Board_Name] LIKE 'Triage')\n  AND [parentTicketId] IS NULL\n  AND [Closed_By] NOT LIKE 'Automate'\n  AND [Date_Closed_UTC] > GETUTCDATE() - 14\n  GROUP BY $__timeGroup([Date_Closed_UTC], '1d',0)\n  ORDER BY $__timeGroup([Date_Closed_UTC], '1d',0)",
+          "rawSql": "DECLARE @RandomDelay INT = ABS(CHECKSUM(NEWID()) % (${random_delay}-1)) WAITFOR DELAY @RandomDelay\r\nSELECT\r\n    $__timeGroup([Date_Closed_UTC], '1d', 0) AS 'time',\r\n    ISNULL(COUNT([SR_Service_RecID]), 0) AS 'Closed Tickets'\r\nFROM\r\n    [${cw_db_name}].[dbo].[v_api_collection_service_ticket]\r\nWHERE\r\n    [Board_Name] IN(${cw_board:sqlstring}) AND\r\n    [parentTicketId] IS NULL AND\r\n    $__timeFilter([Date_Closed_UTC])\r\nGROUP BY $__timeGroup([Date_Closed_UTC], '1d', 0)\r\nORDER BY $__timeGroup([Date_Closed_UTC], '1d', 0)",
           "refId": "B"
         }
       ],
-      "thresholds": [],
-      "timeFrom": null,
-      "timeRegions": [],
-      "timeShift": null,
-      "title": "Tickets Opened vs Closed (Last 14 Days)",
-      "tooltip": {
-        "shared": true,
-        "sort": 0,
-        "value_type": "individual"
-      },
+      "title": "Tickets Opened vs Closed",
       "transformations": [
         {
           "id": "organize",
@@ -1457,49 +1418,16 @@
           }
         }
       ],
-      "type": "graph",
-      "xaxis": {
-        "buckets": null,
-        "mode": "time",
-        "name": null,
-        "show": true,
-        "values": []
-      },
-      "yaxes": [
-        {
-          "$$hashKey": "object:742",
-          "decimals": null,
-          "format": "short",
-          "label": "",
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": true
-        },
-        {
-          "$$hashKey": "object:743",
-          "format": "short",
-          "label": "",
-          "logBase": 1,
-          "max": null,
-          "min": null,
-          "show": false
-        }
-      ],
-      "yaxis": {
-        "align": false,
-        "alignLevel": null
-      }
+      "type": "timeseries"
     },
     {
-      "datasource": "${DS_CONNECTWISE_MANAGE}",
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_CONNECTWISE_MANAGE}"
+      },
       "description": "Hours logged on this week's timesheet",
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": null
-          },
-          "displayName": "$__cell_0",
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
@@ -1530,39 +1458,42 @@
       "id": 16,
       "options": {
         "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
             "mean"
           ],
+          "fields": "",
           "values": true
         },
         "showUnfilled": true
       },
-      "pluginVersion": "7.0.0",
+      "pluginVersion": "8.5.3",
       "targets": [
         {
           "alias": "",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_CONNECTWISE_MANAGE}"
+          },
           "format": "table",
-          "rawSql": "DECLARE @RandomDelay int = ABS(CHECKSUM(NEWID()) % ($random_delay-1))\nWAITFOR DELAY @RandomDelay\nSELECT [Member_Name],\n        [TS_Hours]\n  FROM [$cw_db_name].[dbo].[v_api_collection_time_sheet]\n  WHERE [Date_End] < GETDATE() + 7\n  AND [Date_Start] > GETDATE() - 7\n  ORDER BY [TS_Hours] DESC",
+          "rawSql": "DECLARE @RandomDelay INT = ABS(CHECKSUM(NEWID()) % (${random_delay}-1)) WAITFOR DELAY @RandomDelay\r\nSELECT [Member_Name], [TS_Hours]\r\nFROM\r\n    [${cw_db_name}].[dbo].[v_api_collection_time_sheet]\r\nWHERE\r\n    [Date_End] < GETDATE() + 7 AND\r\n    [Date_Start] > GETDATE() - 7\r\nORDER BY [TS_Hours] DESC",
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Hours logged this week",
+      "title": "Hours Logged This Week",
       "type": "bargauge"
     },
     {
-      "datasource": "${DS_CONNECTWISE_MANAGE}",
-      "description": "Excludes Automate-closed tickets",
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_CONNECTWISE_MANAGE}"
+      },
+      "description": "",
       "fieldConfig": {
         "defaults": {
-          "custom": {
-            "align": null,
-            "displayMode": "auto"
-          },
-          "displayName": "$__cell_0",
           "links": [],
           "mappings": [],
           "thresholds": {
@@ -1575,32 +1506,7 @@
             ]
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Closed last 24 hrs"
-            },
-            "properties": [
-              {
-                "id": "custom.displayMode",
-                "value": "gradient-gauge"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Closed_By"
-            },
-            "properties": [
-              {
-                "id": "custom.width",
-                "value": 157
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "gridPos": {
         "h": 9,
@@ -1611,27 +1517,32 @@
       "id": 6,
       "options": {
         "displayMode": "gradient",
+        "minVizHeight": 10,
+        "minVizWidth": 0,
         "orientation": "auto",
         "reduceOptions": {
           "calcs": [
             "mean"
           ],
+          "fields": "",
           "values": true
         },
         "showUnfilled": true
       },
-      "pluginVersion": "7.0.0",
+      "pluginVersion": "8.5.3",
       "targets": [
         {
           "alias": "",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_CONNECTWISE_MANAGE}"
+          },
           "format": "table",
-          "rawSql": "DECLARE @RandomDelay int = ABS(CHECKSUM(NEWID()) % ($random_delay-1))\nWAITFOR DELAY @RandomDelay\nSELECT\n      [SR_Type_Name], \n      COUNT(*) as 'Ticket Types last 7 days'\n  FROM [$cw_db_name].[dbo].[v_api_collection_service_ticket]\n  WHERE ([Board_Name] LIKE 'Support')\n  AND [parentTicketId] IS NULL\n  AND [Date_Entered_UTC] > GETUTCDATE() - 7\n  AND [Closed_By] NOT LIKE 'Automate'\n  GROUP BY [SR_Type_Name]\n  ORDER BY 'Ticket Types last 7 days' DESC",
+          "rawSql": "DECLARE @RandomDelay INT = ABS(CHECKSUM(NEWID()) % (${random_delay}-1)) WAITFOR DELAY @RandomDelay\r\nSELECT\r\n    [SR_SubType_Name],\r\n    COUNT(*) AS 'Ticket Types'\r\nFROM\r\n    [${cw_db_name}].[dbo].[v_api_collection_service_ticket]\r\nWHERE\r\n    [Board_Name] IN(${cw_board:sqlstring}) AND\r\n    [parentTicketId] IS NULL AND\r\n    [SR_SubType_Name] IS NOT NULL AND\r\n    [Date_Entered_UTC] > GETUTCDATE() - 7\r\nGROUP BY [SR_SubType_Name]\r\nORDER BY 'Ticket Types' DESC",
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
-      "title": "Ticket categories, last 7 days (NEEDS FIXING?)",
+      "title": "Ticket Categories This Week",
       "transformations": [
         {
           "id": "organize",
@@ -1652,7 +1563,7 @@
               "SLA_Name": true,
               "SR_Service_RecID": false,
               "SR_SubTypeItem_Name": true,
-              "SR_SubType_Name": true,
+              "SR_SubType_Name": false,
               "SR_Type_Name": false,
               "parentTicketId": true
             },
@@ -1695,82 +1606,151 @@
     }
   ],
   "refresh": "15m",
-  "schemaVersion": 25,
+  "schemaVersion": 36,
   "style": "dark",
-  "tags": [],
+  "tags": [
+    "ConnectWise",
+    "Help Desk"
+  ],
   "templating": {
     "list": [
       {
-        "current": {
-          "value": "${VAR_CW_API_URL}",
-          "text": "${VAR_CW_API_URL}"
-        },
         "hide": 2,
         "label": "i.e. https://api-au.myconnectwise.net/v4_6_release",
         "name": "cw_api_url",
+        "query": "${VAR_CW_API_URL}",
+        "skipUrlSync": false,
+        "type": "constant",
+        "current": {
+          "value": "${VAR_CW_API_URL}",
+          "text": "${VAR_CW_API_URL}",
+          "selected": false
+        },
         "options": [
           {
             "value": "${VAR_CW_API_URL}",
-            "text": "${VAR_CW_API_URL}"
+            "text": "${VAR_CW_API_URL}",
+            "selected": false
           }
-        ],
-        "query": "${VAR_CW_API_URL}",
-        "skipUrlSync": false,
-        "type": "constant"
+        ]
       },
       {
-        "current": {
-          "value": "${VAR_CW_COMPANY_ID}",
-          "text": "${VAR_CW_COMPANY_ID}"
-        },
         "hide": 2,
         "label": "Your MSP's company ID as it is in ConnectWise Manage",
         "name": "cw_company_id",
+        "query": "${VAR_CW_COMPANY_ID}",
+        "skipUrlSync": false,
+        "type": "constant",
+        "current": {
+          "value": "${VAR_CW_COMPANY_ID}",
+          "text": "${VAR_CW_COMPANY_ID}",
+          "selected": false
+        },
         "options": [
           {
             "value": "${VAR_CW_COMPANY_ID}",
-            "text": "${VAR_CW_COMPANY_ID}"
+            "text": "${VAR_CW_COMPANY_ID}",
+            "selected": false
           }
-        ],
-        "query": "${VAR_CW_COMPANY_ID}",
-        "skipUrlSync": false,
-        "type": "constant"
+        ]
       },
       {
-        "current": {
-          "value": "${VAR_CW_DB_NAME}",
-          "text": "${VAR_CW_DB_NAME}"
-        },
         "hide": 2,
         "label": "Database Name i.e. cwwebapp_yourmsp",
         "name": "cw_db_name",
+        "query": "${VAR_CW_DB_NAME}",
+        "skipUrlSync": false,
+        "type": "constant",
+        "current": {
+          "value": "${VAR_CW_DB_NAME}",
+          "text": "${VAR_CW_DB_NAME}",
+          "selected": false
+        },
         "options": [
           {
             "value": "${VAR_CW_DB_NAME}",
-            "text": "${VAR_CW_DB_NAME}"
+            "text": "${VAR_CW_DB_NAME}",
+            "selected": false
           }
-        ],
-        "query": "${VAR_CW_DB_NAME}",
-        "skipUrlSync": false,
-        "type": "constant"
+        ]
       },
       {
+        "hide": 2,
+        "name": "cw_locale",
+        "query": "${VAR_CW_LOCALE}",
+        "skipUrlSync": false,
+        "type": "constant",
         "current": {
-          "value": "${VAR_RANDOM_DELAY}",
-          "text": "${VAR_RANDOM_DELAY}"
+          "value": "${VAR_CW_LOCALE}",
+          "text": "${VAR_CW_LOCALE}",
+          "selected": false
         },
+        "options": [
+          {
+            "value": "${VAR_CW_LOCALE}",
+            "text": "${VAR_CW_LOCALE}",
+            "selected": false
+          }
+        ]
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "mssql",
+          "uid": "${DS_CONNECTWISE_MANAGE}"
+        },
+        "definition": "SELECT [Board_Name]\nFROM [${cw_db_name}].[dbo].[v_api_collection_service_board]\nWHERE [Inactive_Flag] = 0\n    AND [Activity_Type_RecID] = 51",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Board:",
+        "multi": true,
+        "name": "cw_board",
+        "options": [],
+        "query": "SELECT [Board_Name]\nFROM [${cw_db_name}].[dbo].[v_api_collection_service_board]\nWHERE [Inactive_Flag] = 0\n    AND [Activity_Type_RecID] = 51",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "hide": 2,
+        "name": "grafana_url",
+        "query": "${VAR_GRAFANA_URL}",
+        "skipUrlSync": false,
+        "type": "constant",
+        "current": {
+          "value": "${VAR_GRAFANA_URL}",
+          "text": "${VAR_GRAFANA_URL}",
+          "selected": false
+        },
+        "options": [
+          {
+            "value": "${VAR_GRAFANA_URL}",
+            "text": "${VAR_GRAFANA_URL}",
+            "selected": false
+          }
+        ]
+      },
+      {
         "hide": 2,
         "label": "Random delay, between zero and $random_delay seconds",
         "name": "random_delay",
+        "query": "${VAR_RANDOM_DELAY}",
+        "skipUrlSync": false,
+        "type": "constant",
+        "current": {
+          "value": "${VAR_RANDOM_DELAY}",
+          "text": "${VAR_RANDOM_DELAY}",
+          "selected": false
+        },
         "options": [
           {
             "value": "${VAR_RANDOM_DELAY}",
-            "text": "${VAR_RANDOM_DELAY}"
+            "text": "${VAR_RANDOM_DELAY}",
+            "selected": false
           }
-        ],
-        "query": "${VAR_RANDOM_DELAY}",
-        "skipUrlSync": false,
-        "type": "constant"
+        ]
       }
     ]
   },
@@ -1792,5 +1772,6 @@
   "timezone": "",
   "title": "Manage - Help Desk",
   "uid": "89mGyg1Gz",
-  "version": 57
+  "version": 46,
+  "weekStart": ""
 }

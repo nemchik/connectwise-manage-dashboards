@@ -84,7 +84,7 @@
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1654800425595,
+  "iteration": 1654800424219,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -135,6 +135,18 @@
           }
         },
         "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Company_Name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 427
+              }
+            ]
+          },
           {
             "matcher": {
               "id": "byName",
@@ -249,11 +261,11 @@
             "uid": "${DS_CONNECTWISE_MANAGE}"
           },
           "format": "table",
-          "rawSql": "SELECT\r\n    [SR_Service_RecID],\r\n    [Summary],\r\n    [Board_Name],\r\n    [Status_Name],\r\n    [Company_ID],\r\n    [Closed_Flag],\r\n    [SR_Type_Name],\r\n    [SR_SubType_Name],\r\n    [SR_SubTypeItem_Name],\r\n    [SR_Urgency_Name],\r\n    [Hours_Actual],\r\n    CAST(\r\n        DATEDIFF(hh, [Date_Entered_UTC], GETUTCDATE()) / 24.0 AS DECIMAL(10, 1)\r\n    ) AS 'Age',\r\n    [Date_Resolved_UTC],\r\n    [Date_Resplan_UTC],\r\n    [Date_Responded_UTC],\r\n    [Resolved_Minutes],\r\n    [Resplan_Minutes],\r\n    [Responded_Minutes],\r\n    [IsInSla],\r\n    [Last_Update_UTC],\r\n    [ResourceList],\r\n    [Company_Name],\r\n    [Closed_By],\r\n    [SLA_Name],\r\n    [parentTicketId]\r\nFROM\r\n    [${cw_db_name}].[dbo].[v_api_collection_service_ticket]\r\nWHERE\r\n    [Board_Name] IN(${cw_board:sqlstring}) AND\r\n    [Closed_Flag] = 0 AND\r\n    [parentTicketId] IS NULL AND\r\n    [ResourceList] IN (\r\n        SELECT [Member_ID]\r\n        FROM\r\n            [${cw_db_name}].[dbo].[v_api_collection_system_member]\r\n        WHERE\r\n            [Inactive_Flag] = 0 AND\r\n            [Member_Class] = 'F' AND\r\n            Member_Name LIKE '%#%' AND\r\n            Date_Hire IS NOT NULL\r\n    )\r\nORDER BY SR_Urgency_Name, Age DESC",
+          "rawSql": "SELECT\r\n    [SR_Service_RecID],\r\n    [Summary],\r\n    [Board_Name],\r\n    [Status_Name],\r\n    [Company_ID],\r\n    [Closed_Flag],\r\n    [SR_Type_Name],\r\n    [SR_SubType_Name],\r\n    [SR_SubTypeItem_Name],\r\n    [SR_Urgency_Name],\r\n    [Hours_Actual],\r\n    CAST(\r\n        DATEDIFF(hh, [Date_Entered_UTC], GETUTCDATE()) / 24.0 AS DECIMAL(10, 1)\r\n    ) AS 'Age',\r\n    [Date_Resolved_UTC],\r\n    [Date_Resplan_UTC],\r\n    [Date_Responded_UTC],\r\n    [Resolved_Minutes],\r\n    [Resplan_Minutes],\r\n    [Responded_Minutes],\r\n    [IsInSla],\r\n    [Last_Update_UTC],\r\n    [ResourceList],\r\n    [Company_Name],\r\n    [Closed_By],\r\n    [SLA_Name],\r\n    [parentTicketId]\r\nFROM\r\n    [${cw_db_name}].[dbo].[v_api_collection_service_ticket]\r\nWHERE\r\n    [Board_Name] IN(${cw_board:sqlstring}) AND\r\n    [Closed_Flag] = 0 AND\r\n    [parentTicketId] IS NULL AND\r\n    [Last_Update_UTC] < GETUTCDATE() - 3 AND\r\n    [Status_Name] NOT IN ('Scheduled') AND\r\n    [Status_Name] NOT LIKE '%wait%'\r\nORDER BY SR_Urgency_Name, Age DESC",
           "refId": "A"
         }
       ],
-      "title": "Triaged Tickets",
+      "title": "Tickets not updated in 3 days",
       "transformations": [
         {
           "id": "organize",
@@ -270,7 +282,7 @@
               "IsInSla": true,
               "Last_Update_UTC": true,
               "Resolved_Minutes": true,
-              "ResourceList": false,
+              "ResourceList": true,
               "Resplan_Minutes": true,
               "Responded_Minutes": true,
               "SLA_Name": true,
@@ -330,7 +342,7 @@
   "style": "dark",
   "tags": [
     "ConnectWise",
-    "Triage"
+    "Untouched Tickets"
   ],
   "templating": {
     "list": [
@@ -454,8 +466,8 @@
     ]
   },
   "timezone": "",
-  "title": "Manage - Drilldown - Triage",
-  "uid": "fXuVBXxGk",
-  "version": 16,
+  "title": "Manage - Drilldown - Untouched Tickets",
+  "uid": "LKIYZn1nk",
+  "version": 13,
   "weekStart": ""
 }

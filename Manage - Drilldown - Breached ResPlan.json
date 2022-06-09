@@ -28,14 +28,22 @@
       "label": "Database Name i.e. cwwebapp_yourmsp",
       "value": "cwwebapp_yourmsp",
       "description": ""
+    },
+    {
+      "name": "VAR_CW_LOCALE",
+      "type": "constant",
+      "label": "cw_locale",
+      "value": "en_US",
+      "description": ""
     }
   ],
+  "__elements": [],
   "__requires": [
     {
       "type": "grafana",
       "id": "grafana",
       "name": "Grafana",
-      "version": "7.0.0"
+      "version": "8.5.3"
     },
     {
       "type": "datasource",
@@ -54,29 +62,45 @@
     "list": [
       {
         "builtIn": 1,
-        "datasource": "-- Grafana --",
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
         "enable": true,
         "hide": true,
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
+        "target": {
+          "limit": 100,
+          "matchAny": false,
+          "tags": [],
+          "type": "dashboard"
+        },
         "type": "dashboard"
       }
     ]
   },
   "editable": true,
-  "gnetId": null,
+  "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
   "id": null,
-  "iteration": 1609382403721,
+  "iteration": 1654800423029,
   "links": [],
+  "liveNow": false,
   "panels": [
     {
-      "datasource": "${DS_CONNECTWISE_MANAGE}",
+      "datasource": {
+        "type": "mssql",
+        "uid": "${DS_CONNECTWISE_MANAGE}"
+      },
       "description": "",
       "fieldConfig": {
         "defaults": {
           "custom": {
-            "align": null
+            "align": "auto",
+            "displayMode": "auto",
+            "filterable": true,
+            "inspect": false
           },
           "links": [],
           "mappings": [],
@@ -126,7 +150,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Ticket #"
+              "options": "SR_Service_RecID"
             },
             "properties": [
               {
@@ -148,86 +172,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Urgency"
-            },
-            "properties": [
-              {
-                "id": "custom.displayMode",
-                "value": "color-background"
-              },
-              {
-                "id": "mappings",
-                "value": [
-                  {
-                    "from": "",
-                    "id": 0,
-                    "operator": "",
-                    "text": "MSP - Respond ASAP",
-                    "to": "",
-                    "type": 1,
-                    "value": "0"
-                  },
-                  {
-                    "from": "",
-                    "id": 1,
-                    "operator": "",
-                    "text": "Priority 1 - Critical",
-                    "to": "",
-                    "type": 1,
-                    "value": "1"
-                  },
-                  {
-                    "from": "",
-                    "id": 2,
-                    "operator": "",
-                    "text": "Priority 2 - High",
-                    "to": "",
-                    "type": 1,
-                    "value": "2"
-                  },
-                  {
-                    "from": "",
-                    "id": 3,
-                    "operator": "",
-                    "text": "Priority 3 - Medium",
-                    "to": "",
-                    "type": 1,
-                    "value": "3"
-                  },
-                  {
-                    "from": "",
-                    "id": 4,
-                    "operator": "",
-                    "text": "Priority 4 - Low",
-                    "to": "",
-                    "type": 1,
-                    "value": "4"
-                  },
-                  {
-                    "from": "",
-                    "id": 5,
-                    "operator": "",
-                    "text": "No SLA",
-                    "to": "",
-                    "type": 1,
-                    "value": "5"
-                  }
-                ]
-              },
-              {
-                "id": "custom.width",
-                "value": 243
-              },
-              {
-                "id": "custom.align",
-                "value": "center"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Status"
+              "options": "Status_Name"
             },
             "properties": [
               {
@@ -239,7 +184,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Client"
+              "options": "Company_Name"
             },
             "properties": [
               {
@@ -298,19 +243,28 @@
       },
       "id": 2,
       "options": {
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
         "showHeader": true
       },
-      "pluginVersion": "7.0.0",
+      "pluginVersion": "8.5.3",
       "targets": [
         {
           "alias": "",
+          "datasource": {
+            "type": "mssql",
+            "uid": "${DS_CONNECTWISE_MANAGE}"
+          },
           "format": "table",
-          "rawSql": "SELECT\n\t\t[SR_Service_RecID]\n      ,[Summary]\n      ,[Board_Name]\n      ,[Status_Name]\n      ,[Company_ID]\n      ,[Closed_Flag]\n      ,[SR_Type_Name]\n      ,[SR_SubType_Name]\n      ,[SR_SubTypeItem_Name]\n      ,[SR_Urgency_Name]\n      ,[Hours_Actual]\n      ,CAST(DATEDIFF(hh, [Date_Entered_UTC], GETUTCDATE())/24.0 as DECIMAL(10, 1)) as 'Age'\n      ,[Date_Resolved_UTC]\n      ,[Date_Resplan_UTC]\n      ,[Date_Responded_UTC]\n      ,[Resolved_Minutes]\n      ,[Resplan_Minutes]\n      ,[Responded_Minutes]\n      ,[IsInSla]\n      ,[Last_Update_UTC]\n      ,[ResourceList]\n      ,[Company_Name]\n      ,[Closed_By]\n      ,[SLA_Name]\n      ,[parentTicketId]\n      ,SUBSTRING([SR_Urgency_Name], 10,1) AS 'Urgency'\n  FROM [$cw_db_name].[dbo].[v_api_collection_service_ticket]\n  WHERE [Closed_Flag] = 0\n  AND [Board_Name] LIKE 'Support'\n  AND [parentTicketId] IS NULL\n  AND [SR_Urgency_Name] LIKE 'Priority 0 - MSP'\n  AND [IsInSLA] = 0\n  ORDER BY SR_Urgency_Name, Age DESC\n",
+          "rawSql": "SELECT\r\n    [SR_Service_RecID],\r\n    [Summary],\r\n    [Board_Name],\r\n    [Status_Name],\r\n    [Company_ID],\r\n    [Closed_Flag],\r\n    [SR_Type_Name],\r\n    [SR_SubType_Name],\r\n    [SR_SubTypeItem_Name],\r\n    [SR_Urgency_Name],\r\n    [Hours_Actual],\r\n    CAST(\r\n        DATEDIFF(hh, [Date_Entered_UTC], GETUTCDATE()) / 24.0 AS DECIMAL(10, 1)\r\n    ) AS 'Age',\r\n    [Date_Resolved_UTC],\r\n    [Date_Resplan_UTC],\r\n    [Date_Responded_UTC],\r\n    [Resolved_Minutes],\r\n    [Resplan_Minutes],\r\n    [Responded_Minutes],\r\n    [IsInSla],\r\n    [Last_Update_UTC],\r\n    [ResourceList],\r\n    [Company_Name],\r\n    [Closed_By],\r\n    [SLA_Name],\r\n    [parentTicketId]\r\nFROM\r\n    [${cw_db_name}].[dbo].[v_api_collection_service_ticket]\r\nWHERE\r\n    [Board_Name] IN(${cw_board:sqlstring}) AND\r\n    [Closed_Flag] = 0 AND\r\n    [parentTicketId] IS NULL AND\r\n    [IsInSLA] = 0 AND\r\n    [SR_Urgency_Name] = (\r\n        SELECT TOP 1 [SR_Urgency_Name]\r\n        FROM\r\n            [${cw_db_name}].[dbo].[v_api_collection_service_ticket]\r\n        ORDER BY [SR_Urgency_Name]\r\n    )\r\nORDER BY SR_Urgency_Name, Age DESC",
           "refId": "A"
         }
       ],
-      "timeFrom": null,
-      "timeShift": null,
       "title": "Breached ResPlan",
       "transformations": [
         {
@@ -336,43 +290,44 @@
               "SR_SubTypeItem_Name": true,
               "SR_SubType_Name": true,
               "SR_Type_Name": true,
-              "SR_Urgency_Name": true,
+              "SR_Urgency_Name": false,
               "parentTicketId": true
             },
             "indexByName": {
-              "Age": 24,
+              "Age": 7,
               "Board_Name": 3,
-              "Closed_By": 22,
-              "Closed_Flag": 6,
-              "Company_ID": 5,
+              "Closed_By": 23,
+              "Closed_Flag": 9,
+              "Company_ID": 8,
               "Company_Name": 2,
-              "Date_Resolved_UTC": 12,
-              "Date_Resplan_UTC": 13,
-              "Date_Responded_UTC": 14,
-              "Hours_Actual": 11,
-              "IsInSla": 18,
-              "Last_Update_UTC": 19,
-              "Resolved_Minutes": 15,
-              "ResourceList": 20,
-              "Resplan_Minutes": 16,
-              "Responded_Minutes": 17,
-              "SLA_Name": 21,
+              "Date_Resolved_UTC": 14,
+              "Date_Resplan_UTC": 15,
+              "Date_Responded_UTC": 16,
+              "Hours_Actual": 13,
+              "IsInSla": 20,
+              "Last_Update_UTC": 21,
+              "Resolved_Minutes": 17,
+              "ResourceList": 4,
+              "Resplan_Minutes": 18,
+              "Responded_Minutes": 19,
+              "SLA_Name": 22,
               "SR_Service_RecID": 0,
-              "SR_SubTypeItem_Name": 9,
-              "SR_SubType_Name": 8,
-              "SR_Type_Name": 7,
-              "SR_Urgency_Name": 10,
-              "Status_Name": 4,
+              "SR_SubTypeItem_Name": 12,
+              "SR_SubType_Name": 11,
+              "SR_Type_Name": 10,
+              "SR_Urgency_Name": 6,
+              "Status_Name": 5,
               "Summary": 1,
-              "Urgency": 25,
-              "parentTicketId": 23
+              "parentTicketId": 24
             },
             "renameByName": {
               "Board_Name": "Board",
               "Company_ID": "",
               "Company_Name": "Client",
+              "ResourceList": "Resources",
               "SR_Service_RecID": "Ticket #",
               "SR_Type_Name": "",
+              "SR_Urgency_Name": "Urgency",
               "Status_Name": "Status",
               "Summary": ""
             }
@@ -383,64 +338,112 @@
     }
   ],
   "refresh": "15m",
-  "schemaVersion": 25,
+  "schemaVersion": 36,
   "style": "dark",
-  "tags": [],
+  "tags": [
+    "ConnectWise",
+    "Breached ResPlan"
+  ],
   "templating": {
     "list": [
       {
-        "current": {
-          "value": "${VAR_CW_API_URL}",
-          "text": "${VAR_CW_API_URL}"
-        },
         "hide": 2,
         "label": "i.e. https://api-au.myconnectwise.net/v4_6_release",
         "name": "cw_api_url",
+        "query": "${VAR_CW_API_URL}",
+        "skipUrlSync": false,
+        "type": "constant",
+        "current": {
+          "value": "${VAR_CW_API_URL}",
+          "text": "${VAR_CW_API_URL}",
+          "selected": false
+        },
         "options": [
           {
             "value": "${VAR_CW_API_URL}",
-            "text": "${VAR_CW_API_URL}"
+            "text": "${VAR_CW_API_URL}",
+            "selected": false
           }
-        ],
-        "query": "${VAR_CW_API_URL}",
-        "skipUrlSync": false,
-        "type": "constant"
+        ]
       },
       {
-        "current": {
-          "value": "${VAR_CW_COMPANY_ID}",
-          "text": "${VAR_CW_COMPANY_ID}"
-        },
         "hide": 2,
         "label": "Your MSP's company ID as it is in ConnectWise Manage",
         "name": "cw_company_id",
+        "query": "${VAR_CW_COMPANY_ID}",
+        "skipUrlSync": false,
+        "type": "constant",
+        "current": {
+          "value": "${VAR_CW_COMPANY_ID}",
+          "text": "${VAR_CW_COMPANY_ID}",
+          "selected": false
+        },
         "options": [
           {
             "value": "${VAR_CW_COMPANY_ID}",
-            "text": "${VAR_CW_COMPANY_ID}"
+            "text": "${VAR_CW_COMPANY_ID}",
+            "selected": false
           }
-        ],
-        "query": "${VAR_CW_COMPANY_ID}",
-        "skipUrlSync": false,
-        "type": "constant"
+        ]
       },
       {
-        "current": {
-          "value": "${VAR_CW_DB_NAME}",
-          "text": "${VAR_CW_DB_NAME}"
-        },
         "hide": 2,
         "label": "Database Name i.e. cwwebapp_yourmsp",
         "name": "cw_db_name",
+        "query": "${VAR_CW_DB_NAME}",
+        "skipUrlSync": false,
+        "type": "constant",
+        "current": {
+          "value": "${VAR_CW_DB_NAME}",
+          "text": "${VAR_CW_DB_NAME}",
+          "selected": false
+        },
         "options": [
           {
             "value": "${VAR_CW_DB_NAME}",
-            "text": "${VAR_CW_DB_NAME}"
+            "text": "${VAR_CW_DB_NAME}",
+            "selected": false
           }
-        ],
-        "query": "${VAR_CW_DB_NAME}",
+        ]
+      },
+      {
+        "hide": 2,
+        "name": "cw_locale",
+        "query": "${VAR_CW_LOCALE}",
         "skipUrlSync": false,
-        "type": "constant"
+        "type": "constant",
+        "current": {
+          "value": "${VAR_CW_LOCALE}",
+          "text": "${VAR_CW_LOCALE}",
+          "selected": false
+        },
+        "options": [
+          {
+            "value": "${VAR_CW_LOCALE}",
+            "text": "${VAR_CW_LOCALE}",
+            "selected": false
+          }
+        ]
+      },
+      {
+        "current": {},
+        "datasource": {
+          "type": "mssql",
+          "uid": "${DS_CONNECTWISE_MANAGE}"
+        },
+        "definition": "SELECT [Board_Name]\nFROM [${cw_db_name}].[dbo].[v_api_collection_service_board]\nWHERE [Inactive_Flag] = 0\n    AND [Activity_Type_RecID] = 51",
+        "hide": 0,
+        "includeAll": true,
+        "label": "Board:",
+        "multi": true,
+        "name": "cw_board",
+        "options": [],
+        "query": "SELECT [Board_Name]\nFROM [${cw_db_name}].[dbo].[v_api_collection_service_board]\nWHERE [Inactive_Flag] = 0\n    AND [Activity_Type_RecID] = 51",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
       }
     ]
   },
@@ -449,6 +452,7 @@
     "to": "now"
   },
   "timepicker": {
+    "hidden": true,
     "refresh_intervals": [
       "10s",
       "30s",
@@ -464,5 +468,6 @@
   "timezone": "",
   "title": "Manage - Drilldown - Breached ResPlan",
   "uid": "UaFL8XxGk",
-  "version": 3
+  "version": 21,
+  "weekStart": ""
 }
